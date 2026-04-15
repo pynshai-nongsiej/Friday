@@ -1,117 +1,170 @@
-# 🤖 MARK XXX
+# 🤖 FRIDAY — Your Personal AI Assistant
 
-### Next-Generation Personal AI Assistant — By Pynshai Nongsiej
+> *"I'm always on. I'm always listening. I'm FRIDAY."*
 
-A real-time voice AI that can hear, see, understand, and control your computer.
-Local execution. Zero subscriptions (Unless you want to increase requests by buying from Google AI Studio).
-Built for intelligent automation.
-
-## ✨ Overview
-
-**MARK XXX** is an advanced voice-driven AI assistant designed to turn your computer into an interactive intelligent system.
-
-Speak naturally — it listens, understands context, responds with a human-like voice, and executes tasks across your system automatically.
-
-Designed for speed, autonomy, and real-world usability.
-
-## 📸 Screenshots
-
-![HUD Main](screenshots/hud_main.png)
-*The main HUD interface showing voice interaction*
+A powerful voice AI that lives on your computer. It sees, hears, thinks, and acts — all locally.
 
 ---
 
-## 🚀 Capabilities
+## 🎯 What is FRIDAY?
 
-- **Real-time voice interaction** — Natural conversation with instant response
-- **System control** — Launch apps, manage files, execute commands
-- **Autonomous task execution** — Plans and completes multi-step workflows
-- **Visual awareness** — Screen analysis and webcam understanding
-- **Persistent memory** — Learns preferences and remembers context
-- **Integrated tools** — Web search, weather, reminders, messaging, code help, YouTube
+FRIDAY is **your own JARVIS** — a context-aware AI assistant with:
 
-### Available Commands
+- 🎙️ **Natural Voice Chat** — Talk to it, it talks back
+- 👁️ **Vision** — It can see your screen and understand what's happening
+- 🧠 **Memory** — It remembers your preferences, relationships, and context
+- ⚡ **Automation** — It plans and executes complex tasks autonomously
 
-| Command | Description |
-|---------|-------------|
-| `reminder` | Set a timed reminder |
-| `list_reminders` | Show all scheduled reminders |
-| `delete_reminder` | Remove a reminder |
-| `send_message` | Send WhatsApp/Telegram messages |
-| `weather` | Get current weather |
-| `youtube` | Play or summarize videos |
-| `web_search` | Search the web |
-| `open_app` | Launch applications |
-| `file_controller` | Manage files |
-| `screen_process` | Analyze screen content |
-| `voice_notes` | Record voice notes |
+Built with Python + Gemini AI. Runs entirely on your machine.
 
 ---
 
-## ⚡ Quick Start
+## 📸 First Look
 
+![FRIDAY HUD](screenshots/hud_main.png)
+
+*The FRIDAY interface — minimal, clean, powerful*
+
+---
+
+## ✨ Features
+
+### Core Capabilities
+| Feature | What It Does |
+|---------|--------------|
+| 🎙️ Voice Input | Wake word + continuous conversation |
+| 🗣️ Voice Output | Natural TTS responses |
+| 👁️ Screen Vision | Analyzes screenshots in real-time |
+| 🧠 Persistent Memory | Remembers preferences, relationships, notes |
+| ⏰ Smart Reminders | Set reminders by voice |
+| 📱 Messaging | Send WhatsApp/Telegram messages by voice |
+
+### Tools Built-In
+- 🌐 **Web Search** — Ask anything, get answers
+- 📺 **YouTube** — Play, summarize, search videos
+- 🌤️ **Weather** — Real-time weather reports
+- 📁 **File Manager** — Create, read, delete, organize files
+- 💻 **App Launcher** — Open apps with your voice
+- 🖥️ **System Control** — Volume, brightness, screenshots, more
+- ✈️ **Flight Finder** — Search flights
+- 💻 **Code Helper** — Write and debug code
+
+---
+
+## 🚀 Get FRIDAY Running
+
+### 1. Clone
 ```bash
 git clone https://github.com/pynshai-nongsiej/Friday.git
 cd Friday
+```
+
+### 2. Install Dependencies
+```bash
 pip install -r requirements.txt
+```
+
+### 3. Setup
+```bash
 python setup.py
+```
+
+### 4. Run
+```bash
 python main.py
 ```
 
-Enter your free Gemini API key on first launch.
-System ready in minutes.
+### 5. Add Your API Key
+On first run, enter your **free Gemini API key** when prompted.
+
+That's it. FRIDAY is ready.
 
 ---
 
 ## 📋 Requirements
 
-- Windows 10/11 or macOS
-- Python 3.10 or newer
-- Microphone
-- Gemini API key (free)
+- **OS**: Windows 10/11 or macOS
+- **Python**: 3.10+
+- **Mic**: Any working microphone
+- **API Key**: Free from [Google AI Studio](https://aistudio.google.com)
 
 ---
 
 ## 📁 Project Structure
 
 ```
-Mark-XXX/
-├── actions/           # Action modules (reminder, weather, etc.)
-├── agent/            # AI agents (planner, executor)
-├── memory/           # Persistent memory storage
-├── config/           # Configuration files
-├── core/             # Core prompts
-├── Desktop/          # Desktop utilities
-├── main.py            # Main entry point
-├── ui.py             # GUI interface
-└── readme.md         # This file
+Friday/
+├── actions/           # All the tools (reminder, weather, etc.)
+├── agent/            # AI planning & execution
+├── memory/           # Persistent storage
+├── config/           # API keys & config
+├── core/             # System prompts
+├── ui.py             # The visual interface
+├── main.py            # Entry point
+└── readme.md        # You're here
 ```
 
 ---
 
-## 🔧 Configuration
+## 🛠️ Configuration
 
-Edit `config/api_keys.json` to add your API keys:
+Edit `config/api_keys.json`:
 
 ```json
 {
-  "GEMINI_API_KEY": "your-key-here",
-  "OPENWEATHER_API_KEY": "optional",
-  "YOUTUBE_API_KEY": "optional"
+  "GEMINI_API_KEY": "your-key-here"
 }
 ```
 
----
-
-## 💬 Connect
-
-- Instagram: [@pynshai._.nongsiej](https://instagram.com/pynshai._.nongsiej)
+Optional keys for extra features:
+- `OPENWEATHER_API_KEY` — weather data
+- Custom TTS voices
 
 ---
 
-## ⚠️ License
+## 🎭 Talk to FRIDAY
 
-Personal and non-commercial use only.
-Licensed under **Creative Commons BY-NC 4.0**.
+Just speak naturally! Example commands:
 
-⭐ Star the repository to support the project.
+| You Say | FRIDAY Does |
+|---------|------------|
+| "Hey FRIDAY, set a reminder for 3 PM" | Sets reminder |
+| "What's the weather?" | Gives weather |
+| "Play some music on YouTube" | Opens YouTube |
+| "Send a message to John on WhatsApp" | Sends message |
+| "Take a screenshot" | Captures screen |
+| "Open Safari" | Launches app |
+| "What's on my screen?" | Analyzes screen |
+
+---
+
+## 🔐 Privacy
+
+- **Your data stays on your machine**
+- No cloud recording
+- You control everything
+- API calls only go to Google for AI processing
+
+---
+
+## 🌍 Connect
+
+- **Instagram**: [@pynshai._.nongsiej](https://instagram.com/pynshai._.nongsiej)
+
+---
+
+## 📜 License
+
+**CC BY-NC 4.0** — Personal use only. Non-commercial.
+
+---
+
+## ⭐ Show Support
+
+If this project helps you — star it. It costs nothing and helps others find FRIDAY.
+
+---
+
+*Built with ❤️ by Pynshai Nongsiej*
+
+*"I'm only as useful as you let me be, boss."*
