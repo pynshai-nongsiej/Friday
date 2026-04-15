@@ -153,11 +153,7 @@ Just speak naturally! Example commands:
 
 ---
 
-## 📜 License
 
-**CC BY-NC 4.0** — Personal use only. Non-commercial.
-
----
 
 ## ⭐ Show Support
 
