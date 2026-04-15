@@ -2,6 +2,7 @@ import subprocess
 import sys
 import json
 import re
+import shlex
 from pathlib import Path
 
 
@@ -61,6 +62,88 @@ WIN_COMMAND_MAP = [
      'powershell "Get-ChildItem C:\\ -Recurse -ErrorAction SilentlyContinue | Sort-Object Length -Descending | Select-Object -First 10 FullName,Length | Format-Table"', False),
 ]
 
+
+def _normalize_user_path(raw: str) -> Path:
+    text = (raw or "").strip().strip('"').strip("'")
+    text = text.replace("\\", "/")
+    lowered = text.lower()
+
+    if lowered.startswith("~/"):
+        return Path.home() / text[2:]
+    if lowered.startswith("desktop/"):
+        return Path.home() / "Desktop" / text.split("/", 1)[1]
+    if lowered == "desktop":
+        return Path.home() / "Desktop"
+    if lowered.startswith("downloads/"):
+        return Path.home() / "Downloads" / text.split("/", 1)[1]
+    if lowered == "downloads":
+        return Path.home() / "Downloads"
+    if lowered.startswith("documents/"):
+        return Path.home() / "Documents" / text.split("/", 1)[1]
+    if lowered == "documents":
+        return Path.home() / "Documents"
+
+    path = Path(text).expanduser()
+    if path.is_absolute():
+        return path
+    return Path.home() / text
+
+
+def _quote_path(path: Path) -> str:
+    return shlex.quote(str(path))
+
+
+def _build_python_run_command(target: str, args: str = "") -> str:
+    path = _normalize_user_path(target)
+    quoted = _quote_path(path)
+    extra = f" {args.strip()}" if args.strip() else ""
+    return f"python3 {quoted}{extra}"
+
+
+def _local_fallback_command(task: str) -> str | None:
+    task = (task or "").strip()
+    task_lower = task.lower()
+    platform = _get_platform()
+
+    run_python = re.search(
+        r"^(?:run|execute|start|launch)\s+(?:python|python3)\s+(.+?)(?:\s+with\s+args\s+(.+))?$",
+        task,
+        re.IGNORECASE,
+    )
+    if run_python:
+        return _build_python_run_command(run_python.group(1), run_python.group(2) or "")
+
+    direct_python = re.search(
+        r"^(?:python|python3)\s+(.+?)(?:\s+with\s+args\s+(.+))?$",
+        task,
+        re.IGNORECASE,
+    )
+    if direct_python:
+        return _build_python_run_command(direct_python.group(1), direct_python.group(2) or "")
+
+    open_file = re.search(r"^(?:open|show)\s+(.+)$", task, re.IGNORECASE)
+    if open_file:
+        path = _normalize_user_path(open_file.group(1))
+        quoted = _quote_path(path)
+        if platform == "macos":
+            return f"open {quoted}"
+        if platform == "windows":
+            return f'start "" "{path}"'
+        return f"xdg-open {quoted}"
+
+    list_dir = re.search(r"^(?:list|show)\s+(?:files\s+in\s+)?(.+)$", task, re.IGNORECASE)
+    if list_dir and any(word in task_lower for word in ("desktop", "downloads", "documents", "folder", "directory")):
+        path = _normalize_user_path(list_dir.group(1))
+        return f"ls -la {_quote_path(path)}" if platform != "windows" else f'dir "{path}"'
+
+    if task_lower in {"where am i", "current directory", "pwd"}:
+        return "pwd" if platform != "windows" else "cd"
+
+    if task_lower in {"list files", "ls"}:
+        return "ls -la" if platform != "windows" else "dir"
+
+    return None
+
 def _find_hardcoded(task: str) -> str | None:
     task_lower = task.lower()
     
@@ -82,7 +165,7 @@ def _find_hardcoded(task: str) -> str | None:
         if command and any(kw in task_lower for kw in keywords):
             return command
 
-    return None
+    return _local_fallback_command(task)
 
 BLOCKED_PATTERNS = [
     r"\brm\s+-rf\b", r"\brmdir\s+/s\b", r"\bdel\s+/[fqs]",
@@ -203,13 +286,18 @@ def cmd_control(
         if command:
             print(f"[CMD] ⚡ Hardcoded: {command[:80]}")
         else:
-            print(f"[CMD] 🤖 Gemini fallback for: {task}")
-            command = _ask_gemini(task)
-            print(f"[CMD] ✅ Generated: {command[:80]}")
-            if command == "UNSAFE":
-                return "I cannot generate a safe command for that request, sir."
-            if command.startswith("ERROR:"):
-                return f"Could not generate command: {command}"
+            local_command = _local_fallback_command(task)
+            if local_command:
+                command = local_command
+                print(f"[CMD] 🧭 Local fallback: {command[:80]}")
+            else:
+                print(f"[CMD] 🤖 Gemini fallback for: {task}")
+                command = _ask_gemini(task)
+                print(f"[CMD] ✅ Generated: {command[:80]}")
+                if command == "UNSAFE":
+                    return "I cannot generate a safe command for that request, boss."
+                if command.startswith("ERROR:"):
+                    return f"Could not generate command locally or with Gemini: {command}"
 
     safe, reason = _is_safe(command)
     if not safe:

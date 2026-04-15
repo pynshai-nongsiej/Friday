@@ -39,12 +39,36 @@ def _gemini_search(query: str) -> str:
     return text.strip()
 
 
+def _is_quota_error(error: Exception) -> bool:
+    text = str(error or "")
+    lowered = text.lower()
+    return "429" in text or "resource_exhausted" in lowered or "quota" in lowered
+
+
+def _retry_delay_seconds(error: Exception) -> int | None:
+    text = str(error or "")
+    marker = "retry in "
+    lowered = text.lower()
+    idx = lowered.find(marker)
+    if idx == -1:
+        return None
+    tail = lowered[idx + len(marker) :]
+    digits = []
+    for ch in tail:
+        if ch.isdigit():
+            digits.append(ch)
+        elif digits:
+            break
+    if not digits:
+        return None
+    try:
+        return int("".join(digits))
+    except Exception:
+        return None
+
 
 def _ddg_search(query: str, max_results: int = 6) -> list:
-    try:
-        from ddgs import DDGS
-    except ImportError:
-        from duckduckgo_search import DDGS
+    from ddgs import DDGS
     results = []
     with DDGS() as ddgs:
         for r in ddgs.text(query, max_results=max_results):
@@ -72,7 +96,14 @@ def _compare(items: list, aspect: str) -> str:
     try:
         return _gemini_search(query)
     except Exception as e:
-        print(f"[WebSearch] ⚠️ Gemini compare failed: {e}")
+        if _is_quota_error(e):
+            retry_in = _retry_delay_seconds(e)
+            if retry_in:
+                print(f"[WebSearch] ⚠️ Gemini compare quota hit, retry suggested in ~{retry_in}s. Falling back to DDG.")
+            else:
+                print("[WebSearch] ⚠️ Gemini compare quota hit. Falling back to DDG.")
+        else:
+            print(f"[WebSearch] ⚠️ Gemini compare failed: {e}")
         all_results = {}
         for item in items:
             try:
@@ -124,7 +155,14 @@ def web_search(
             print("[WebSearch] ✅ Gemini OK.")
             return result
         except Exception as e:
-            print(f"[WebSearch] ⚠️ Gemini failed ({e}), trying DDG...")
+            if _is_quota_error(e):
+                retry_in = _retry_delay_seconds(e)
+                if retry_in:
+                    print(f"[WebSearch] ⚠️ Gemini quota hit, retry suggested in ~{retry_in}s. Switching to DDG...")
+                else:
+                    print("[WebSearch] ⚠️ Gemini quota hit. Switching to DDG...")
+            else:
+                print(f"[WebSearch] ⚠️ Gemini failed ({e}), trying DDG...")
             results = _ddg_search(query)
             result  = _format_ddg(query, results)
             print(f"[WebSearch] ✅ DDG: {len(results)} results.")

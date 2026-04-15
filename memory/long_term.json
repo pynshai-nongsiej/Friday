@@ -1,0 +1,30 @@
+{
+  "identity": {},
+  "preferences": {},
+  "relationships": {},
+  "notes": {
+    "relationship_summary": {
+      "value": "The user frequently asks for news updates, particularly regarding geopolitical conflicts like the Iran-US war. They also inquire about system settings and task management capabilities, though some functions like brightness and volume control are unavailable."
+    }
+  },
+  "relationship_profile": {
+    "bond_style": {
+      "value": "assistive"
+    },
+    "support_style": {
+      "value": "informative"
+    },
+    "recurring_goals": {
+      "value": "information retrieval, task management"
+    },
+    "important_people": {
+      "value": "boss"
+    },
+    "ongoing_projects": {
+      "value": "war between Iran and US, Meta app designs, tax deadline, severe storms"
+    },
+    "open_loops": {
+      "value": "specific news topics, system settings control"
+    }
+  }
+}

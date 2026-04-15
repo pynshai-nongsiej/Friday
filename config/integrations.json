@@ -1,0 +1,14 @@
+{
+  "calendar": {
+    "enabled": false,
+    "ics_paths": []
+  },
+  "email": {
+    "enabled": false,
+    "imap_host": "",
+    "email": "",
+    "password": "",
+    "mailbox": "INBOX",
+    "max_items": 5
+  }
+}
