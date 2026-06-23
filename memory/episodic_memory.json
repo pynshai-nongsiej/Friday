@@ -1,0 +1,30 @@
+[
+  {
+    "timestamp": "2026-04-16 19:02:13",
+    "user_summary": "Hello, how are you today?",
+    "assistant_summary": "I'm doing well, thank you! How can I assist you?",
+    "topics": [
+      "hello",
+      "how",
+      "today",
+      "doing",
+      "well",
+      "thank",
+      "assist"
+    ]
+  },
+  {
+    "timestamp": "2026-04-16 19:06:47",
+    "user_summary": "Hello, how are you today?",
+    "assistant_summary": "I'm doing well, thank you! How can I assist you?",
+    "topics": [
+      "hello",
+      "how",
+      "today",
+      "doing",
+      "well",
+      "thank",
+      "assist"
+    ]
+  }
+]

@@ -27,49 +27,31 @@ def _empty_memory() -> dict:
     }
 
 def load_memory() -> dict:
-    if not MEMORY_PATH.exists():
-        return _empty_memory()
-
-    with _lock:
-        try:
-            data = json.loads(MEMORY_PATH.read_text(encoding="utf-8"))
-            if isinstance(data, dict):
-                return data
-            return _empty_memory()
-        except Exception as e:
-            print(f"[Memory] ⚠️ Load error: {e}")
-            return _empty_memory()
+    from memory.memory_db import get_long_term
+    db_mem = get_long_term()
+    
+    # Merge with empty memory to ensure all keys exist
+    mem = _empty_memory()
+    for cat, entries in db_mem.items():
+        if cat in mem:
+            mem[cat].update(entries)
+        else:
+            mem[cat] = entries
+    return mem
 
 
 def save_memory(memory: dict) -> None:
-    if not isinstance(memory, dict):
-        return
-
-    MEMORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-
-    with _lock:
-        MEMORY_PATH.write_text(
-            json.dumps(memory, indent=2, ensure_ascii=False),
-            encoding="utf-8"
-        )
+    from memory.memory_db import update_long_term
+    for category, entries in memory.items():
+        if isinstance(entries, dict):
+            for key, entry in entries.items():
+                val = entry.get("value", "") if isinstance(entry, dict) else str(entry)
+                update_long_term(category, key, val)
 
 
 def load_conversation_history(limit: int | None = None) -> list[dict]:
-    if not CONVERSATION_HISTORY_PATH.exists():
-        return []
-
-    with _lock:
-        try:
-            data = json.loads(CONVERSATION_HISTORY_PATH.read_text(encoding="utf-8"))
-            if not isinstance(data, list):
-                return []
-        except Exception as e:
-            print(f"[Memory] ⚠️ Conversation history load error: {e}")
-            return []
-
-    if limit is not None and limit > 0:
-        return data[-limit:]
-    return data
+    from memory.memory_db import get_conversation_history
+    return get_conversation_history(limit=limit)
 
 
 def append_conversation_turn(user_text: str, assistant_text: str) -> None:
@@ -78,27 +60,14 @@ def append_conversation_turn(user_text: str, assistant_text: str) -> None:
     if not user_text and not assistant_text:
         return
 
-    history = load_conversation_history()
-    history.append(
-        {
-            "timestamp": __import__("time").strftime("%Y-%m-%d %H:%M:%S"),
-            "user": _truncate_value(user_text),
-            "assistant": _truncate_value(assistant_text),
-        }
-    )
-    history = history[-40:]
-
-    CONVERSATION_HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with _lock:
-        CONVERSATION_HISTORY_PATH.write_text(
-            json.dumps(history, indent=2, ensure_ascii=False),
-            encoding="utf-8"
-        )
+    from memory.memory_db import append_conversation
+    append_conversation(_truncate_value(user_text), _truncate_value(assistant_text))
 
 def _truncate_value(val: str) -> str:
     if isinstance(val, str) and len(val) > MAX_VALUE_LENGTH:
         return val[:MAX_VALUE_LENGTH].rstrip() + "…"
     return val
+
 
 
 def _recursive_update(target: dict, updates: dict) -> bool:

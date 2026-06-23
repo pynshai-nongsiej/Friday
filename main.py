@@ -42,6 +42,7 @@ from actions.dev_agent import dev_agent
 from actions.web_search import web_search as web_search_action
 from actions.computer_control import computer_control
 from actions.voice_notes import voice_notes
+from rich_dashboard import start_dashboard, stop_dashboard, log_message
 
 
 def get_base_dir():
@@ -237,6 +238,61 @@ def _update_relationship_memory_async() -> None:
     except Exception as e:
         if "429" not in str(e):
             print(f"[Memory] ⚠️ Relationship summary error: {e}")
+
+
+_compress_turn_counter = 0
+_compress_turn_lock = threading.Lock()
+_COMPRESS_EVERY_N_TURNS = 10
+
+def _compress_trajectory_async() -> None:
+    global _compress_turn_counter
+    
+    with _compress_turn_lock:
+        _compress_turn_counter += 1
+        current_count = _compress_turn_counter
+        
+    if current_count % _COMPRESS_EVERY_N_TURNS != 0:
+        return
+        
+    try:
+        from memory.memory_db import get_conversation_history, delete_conversation_range, append_summary
+        
+        history = get_conversation_history()
+        if len(history) <= 40:
+            return
+            
+        to_compress = history[:-20]
+        if not to_compress:
+            return
+            
+        start_id = to_compress[0]["id"]
+        end_id = to_compress[-1]["id"]
+        
+        import google.generativeai as genai
+        genai.configure(api_key=_get_api_key())
+        model = genai.GenerativeModel("gemini-2.5-flash-lite")
+        
+        history_text = ""
+        for item in to_compress:
+            history_text += f"User: {item['user']}\nAssistant: {item['assistant']}\n\n"
+            
+        prompt = (
+            "Summarize the following conversation history into a concise summary. "
+            "Focus on the tasks accomplished, user preferences revealed, and important context. "
+            "Keep it under 500 characters.\n\n"
+            f"Conversation History:\n{history_text}\n\nSummary:"
+        )
+        
+        response = model.generate_content(prompt)
+        summary = response.text.strip()
+        
+        if summary:
+            append_summary(summary, start_id, end_id)
+            delete_conversation_range(start_id, end_id)
+            print(f"[Memory] 🗜️ Compressed {len(to_compress)} turns into a summary.")
+            
+    except Exception as e:
+        print(f"[Memory] ⚠️ Compression error: {e}")
 
 
 def _load_next_reminder_text() -> str:
@@ -882,6 +938,7 @@ class JarvisLive:
         """Thread-safe speak — any thread can call this."""
         if not self._loop or not self.session:
             return
+        log_message(f"FRIDAY: {text}")
         asyncio.run_coroutine_threadsafe(
             self.session.send_client_content(
                 turns={"parts": [{"text": text}]}, turn_complete=True
@@ -934,6 +991,7 @@ class JarvisLive:
                 turns={"parts": [{"text": _build_boot_greeting_instruction()}]},
                 turn_complete=True,
             )
+            log_message("Boot greeting sent")
         except Exception:
             self._boot_greeted = False
             raise
@@ -1302,12 +1360,14 @@ class JarvisLive:
                                 full_in = " ".join(in_buf).strip()
                                 if full_in:
                                     self.ui.write_log(f"You: {full_in}")
+                                    log_message(f"You: {full_in}")
                             in_buf = []
 
                             if out_buf:
                                 full_out = " ".join(out_buf).strip()
                                 if full_out:
                                     self.ui.write_log(f"FRIDAY: {full_out}")
+                                    log_message(f"FRIDAY: {full_out}")
                             out_buf = []
 
                             if full_in and len(full_in) > 5:
@@ -1319,6 +1379,10 @@ class JarvisLive:
                                 ).start()
                                 threading.Thread(
                                     target=_update_relationship_memory_async,
+                                    daemon=True,
+                                ).start()
+                                threading.Thread(
+                                    target=_compress_trajectory_async,
                                     daemon=True,
                                 ).start()
                                 if hasattr(self.ui, "refresh_memory_views"):
@@ -1409,12 +1473,19 @@ def main():
 
     def runner():
         ui.wait_for_api_key()
+        # Start the dashboard
+        from rich_dashboard import start_dashboard, stop_dashboard, log_message
+        dashboard = start_dashboard()
+        log_message("Dashboard started")
 
         jarvis = JarvisLive(ui)
         try:
             asyncio.run(jarvis.run())
         except KeyboardInterrupt:
             print("\n🔴 Shutting down...")
+        finally:
+            log_message("Dashboard stopping...")
+            stop_dashboard()
 
     threading.Thread(target=runner, daemon=True).start()
     ui.run()

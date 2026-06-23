@@ -14,7 +14,7 @@ BASE_DIR        = get_base_dir()
 API_CONFIG_PATH = BASE_DIR / "config" / "api_keys.json"
 
 
-PLANNER_PROMPT = """You are the planning module of MARK XXV, a personal AI assistant.
+CORE_PROMPT_HEADER = """You are the planning module of MARK XXV, a personal AI assistant.
 Your job: break any user goal into a sequence of steps using ONLY the tools listed below.
 
 ABSOLUTE RULES:
@@ -26,7 +26,9 @@ ABSOLUTE RULES:
 - Max 5 steps. Use the minimum steps needed.
 
 AVAILABLE TOOLS AND THEIR PARAMETERS:
+"""
 
+CORE_TOOLS = """
 open_app
   app_name: string (required)
 
@@ -108,14 +110,16 @@ code_helper
 dev_agent
   description: string (required)
   language: string (optional)
+"""
 
+CORE_PROMPT_FOOTER = """
 EXAMPLES:
 
 Goal: "makine mühendisliği hakkında araştırma yap ve not defterine kaydet"
 Steps:
   1. web_search | query: "mechanical engineering overview definition history"
   2. web_search | query: "mechanical engineering applications and future trends"
-  3. file_controller | action: write, path: desktop, name: makine_muhendisligi.txt, content: "MAKINE MUHENDISLIGI ARASTIRMASI\n\nBu dosya web arastirmasi sonuclari ile doldurulacak."
+  3. file_controller | action: write, path: desktop, name: makine_muhendisligi.txt, content: "MAKINE MUHENDISLIGI ARASTIRMASI\\n\\nBu dosya web arastirmasi sonuclari ile doldurulacak."
   4. cmd_control | task: "open makine_muhendisligi.txt on desktop with notepad"
 
 Goal: "Bitcoin fiyatı nedir"
@@ -150,11 +154,32 @@ OUTPUT — return ONLY valid JSON, no markdown, no explanation, no code blocks:
 }
 """
 
+def get_dynamic_tools() -> str:
+    dynamic_tools = ""
+    actions_dir = BASE_DIR / "actions"
+    if not actions_dir.exists():
+        return ""
+        
+    for path in actions_dir.iterdir():
+        if path.is_file() and path.suffix == ".py" and path.name != "__init__.py":
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    content = f.read()
+                    match = re.search(r'TOOL_SCHEMA\s*=\s*"""([\s\S]*?)"""', content)
+                    if match:
+                        schema = match.group(1).strip()
+                        dynamic_tools += f"\\n{schema}\\n"
+            except Exception as e:
+                print(f"[Planner] ⚠️ Failed to read dynamic tool {path.name}: {e}")
+                
+    return dynamic_tools
+
+def get_planner_prompt() -> str:
+    return CORE_PROMPT_HEADER + CORE_TOOLS + get_dynamic_tools() + CORE_PROMPT_FOOTER
 
 def _get_api_key() -> str:
     with open(API_CONFIG_PATH, "r", encoding="utf-8") as f:
         return json.load(f)["gemini_api_key"]
-
 
 def create_plan(goal: str, context: str = "") -> dict:
     import google.generativeai as genai
@@ -162,7 +187,7 @@ def create_plan(goal: str, context: str = "") -> dict:
     genai.configure(api_key=_get_api_key())
     model = genai.GenerativeModel(
         model_name="gemini-2.5-flash-lite",
-        system_instruction=PLANNER_PROMPT
+        system_instruction=get_planner_prompt()
     )
 
     user_input = f"Goal: {goal}"
@@ -222,7 +247,7 @@ def replan(goal: str, completed_steps: list, failed_step: dict, error: str) -> d
     genai.configure(api_key=_get_api_key())
     model = genai.GenerativeModel(
         model_name="gemini-2.5-flash",
-        system_instruction=PLANNER_PROMPT
+        system_instruction=get_planner_prompt()
     )
 
     completed_summary = "\n".join(

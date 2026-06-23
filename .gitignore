@@ -3,3 +3,4 @@ __pycache__/
 .DS_Store
 .env
 memory/.model_cache/
+config/api_keys.json

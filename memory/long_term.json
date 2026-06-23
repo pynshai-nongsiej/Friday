@@ -4,27 +4,30 @@
   "relationships": {},
   "notes": {
     "relationship_summary": {
-      "value": "The user frequently asks for news updates, particularly regarding geopolitical conflicts like the Iran-US war. They also inquire about system settings and task management capabilities, though some functions like brightness and volume control are unavailable."
+      "value": "A professional relationship where the user acts as 'boss' to an assistant. The primary focus is on a Python project involving the 'relative speed of trains'. The assistant handles technical queries, performs tasks like opening applications and searching the web, and recalls past discussions. There's…"
+    },
+    "memory_system_info": {
+      "value": "Implemented a long-term memory system on 2026-04-16 that provides persistent storage and retrieval of conversation context without requiring LLM processing. The system includes conversation history, episodic memory, and semantic memory components to sustain long-term memory and enable recall of past conversations similar to human memory."
     }
   },
   "relationship_profile": {
     "bond_style": {
-      "value": "assistive"
+      "value": "Professional assistant with a hierarchical dynamic ('boss', 'sir')."
     },
     "support_style": {
-      "value": "informative"
+      "value": "Provides technical analysis, task execution (opening apps), and remembers project context."
     },
     "recurring_goals": {
-      "value": "information retrieval, task management"
+      "value": "Working on the 'relative speed of trains' project in Python."
     },
     "important_people": {
-      "value": "boss"
+      "value": "User's wife (mentioned generally)."
     },
     "ongoing_projects": {
-      "value": "war between Iran and US, Meta app designs, tax deadline, severe storms"
+      "value": "Relative speed of trains project (Python)."
     },
     "open_loops": {
-      "value": "specific news topics, system settings control"
+      "value": "Wife's details, popcorn recipes, specific trading strategy."
     }
   }
 }
